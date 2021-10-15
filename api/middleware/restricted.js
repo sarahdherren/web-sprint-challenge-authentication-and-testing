@@ -53,13 +53,14 @@ const checkUsernameFree = async(req, res, next) => {
 const validateUsername = async(req, res, next) => {
   const { username } = req.body
   const user = await findBy({ username: username })
-  if(!user){
+  if(user.length){
+    req.user = user[0]
+    next()
+  } else {
     next({
       status: 401,
       message: "invalid credentials"
     })
-  } else {
-    next()
   }
 }
 
