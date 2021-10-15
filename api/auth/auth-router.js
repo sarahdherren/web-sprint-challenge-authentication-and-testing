@@ -4,7 +4,7 @@ const {
   checkUsernameFree,
   validateUsername,
   } = require('../middleware/restricted');
-  const { JWT_SECRET } = require('../../secrets/index');
+  const { JWT_SECRET, NUM } = require('../../secrets/index');
   const bcrypt = require('bcryptjs');
   const jwt = require('jsonwebtoken');
   const Users = require('./auth-model');
@@ -12,7 +12,7 @@ const {
 router.post('/register', validateBody, checkUsernameFree, async (req, res, next) => {
   const { username, password } = req.body
   try {
-  const hash = bcrypt.hashSync(password, 8)
+  const hash = bcrypt.hashSync(password, NUM)
   const user = { username, password: hash }
   const registeredUser = await Users.add(user)
   res.status(201).json(registeredUser)
