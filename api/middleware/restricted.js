@@ -1,14 +1,74 @@
-module.exports = (req, res, next) => {
-  next();
-  /*
-    IMPLEMENT
+const { JWT_SECRET } = require('../../secrets/index');
+const jwt = require('jsonwebtoken');
+const { findBy } = require('../auth/auth-model');
 
-    1- On valid token in the Authorization header, call next.
-
-    2- On missing token in the Authorization header,
-      the response body should include a string exactly as follows: "token required".
-
-    3- On invalid or expired token in the Authorization header,
-      the response body should include a string exactly as follows: "token invalid".
-  */
+const restrict = (req, res, next) => {
+  const token = req.headers.authorization
+  if(!token) {
+    return next({
+      status: 401,
+      message: "token required"
+    })
+  } jwt.verify(token, JWT_SECRET, (err, decodedToken) => {
+    if(err) {
+      next({
+        status: 401,
+        message: "token invalid"
+      })
+    } else {
+      req.decodedToken = decodedToken
+      next()
+    }
+  })
 };
+
+const validateBody = (req, res, next) => {
+  const { username, password } = req.body
+  if(username === undefined || typeof username !== 'string' || 
+    !username.trim() || password === undefined || 
+    typeof password !== 'string' || !password.trim()
+    ){
+      next({
+        status: 400,
+        message: "username and password required"
+      })
+    }else {
+      next()
+    }
+};
+
+const checkUsernameFree = async(req, res, next) => {
+  const { username } = req.body
+  const user = await findBy({ username: username})
+  if(user.length){
+    next({
+      status: 422,
+      message: "username taken"
+    })
+  } else {
+    next()
+  }
+};
+
+const validateUsername = async(req, res, next) => {
+  const { username } = req.body
+  const user = await findBy({ username: username })
+  if(!user){
+    next({
+      status: 401,
+      message: "invalid credentials"
+    })
+  } else {
+    next()
+  }
+}
+
+
+module.exports = {
+  restrict,
+  validateBody,
+  checkUsernameFree,
+  validateUsername
+};
+
+
